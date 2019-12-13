@@ -5,5 +5,11 @@ LINKLIBS=$(EYELINK_LIB) -leyelink_core_graphics  -leyelink_core -lsdl_util  -lSD
 CFLAGS=$(EYELINK_INCLUDE) `sdl-config --cflags`
 gcwindow: $(OBJS)
 	$(CC) -no-pie -o gcwindow $(OBJS) $(LINKLIBS)
+
+format: *.c *.h
+	clang-format -i $?
+
 clean:
 	-rm -rf $(OBJS) gcwindow
+
+.PHONY: format clean 

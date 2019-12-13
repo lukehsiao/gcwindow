@@ -24,26 +24,36 @@
 #include <sdl_expt.h>
 #endif
 
-extern DISPLAYINFO dispinfo;  /* display information: size, colors, refresh rate*/
-extern SDL_Surface *window;   /* SDL surface for drawing */
-extern SDL_Color target_background_color;   /* SDL color for the background */
-extern SDL_Color target_foreground_color;   /* SDL color for the foreground drawing (text, calibration target, etc)*/
+extern DISPLAYINFO
+    dispinfo;               /* display information: size, colors, refresh rate*/
+extern SDL_Surface *window; /* SDL surface for drawing */
+extern SDL_Color target_background_color; /* SDL color for the background */
+extern SDL_Color
+    target_foreground_color; /* SDL color for the foreground drawing (text,
+                                calibration target, etc)*/
 
-
-int run_trials(void);   /* This code sequences trials within a block. */
-void clear_full_screen_window(SDL_Color c);  /* Clear the window with a specific color */
-
+int run_trials(void); /* This code sequences trials within a block. */
+void clear_full_screen_window(
+    SDL_Color c); /* Clear the window with a specific color */
 
 /* Run gaze-contingent window trial */
-int gc_window_trial(SDL_Surface* fgbm, SDL_Surface * bgbm, int wwidth, int wheight, int mask, UINT32 time_limit);
+int gc_window_trial(SDL_Surface *fgbm,
+                    SDL_Surface *bgbm,
+                    int wwidth,
+                    int wheight,
+                    int mask,
+                    UINT32 time_limit);
 
-#define SETCOLOR(c,x,y,z) c.r = x; c.g =y; c.b = z;
+#define SETCOLOR(c, x, y, z)                                                   \
+    c.r = x;                                                                   \
+    c.g = y;                                                                   \
+    c.b = z;
 #ifndef WIN32
 #define _stricmp strcasecmp
-#define min(a,b) ((a) < (b))? a:b
+#define min(a, b) ((a) < (b)) ? a : b
 #endif
 #ifdef MACOSX
-#undef  SDL_HWSURFACE
+#undef SDL_HWSURFACE
 #define SDL_HWSURFACE SDL_SWSURFACE /* mac does not hwsurface */
 #endif
 #endif
