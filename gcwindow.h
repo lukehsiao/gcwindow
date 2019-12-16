@@ -41,7 +41,6 @@ int gc_window_trial(SDL_Surface *fgbm,
                     SDL_Surface *bgbm,
                     int wwidth,
                     int wheight,
-                    int mask,
                     UINT32 time_limit);
 
 #define SETCOLOR(c, x, y, z)                                                   \

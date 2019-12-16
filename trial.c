@@ -18,6 +18,7 @@
 #include "gcwindow.h"
 
 #include <gazecursor.h>
+#include <stdlib.h>
 
 /********* PERFORM AN EXPERIMENTAL TRIAL  *******/
 
@@ -33,37 +34,36 @@ static void end_trial(void) {
 }
 
 /*
-    Run a single trial, recording to EDF file and sending data through link
-    This example draws to a bitmap, then copies it to display for fast stimulus
-   onset
-
-     The order of operations is:
-    - Set trial title, ID for analysis
-    - Draw foreground, background bitmaps and create EyeLink display graphics
-    - Drift correction
-    - start recording
-    - <DON'T copy bitmap to display: draw window when first sample arrives>
-    - loop till button press, timeout, or abort, drawing gaze contingent window
-    - stop recording, dispose of bitmaps, handle abort and exit
-
-    NEW CODE FOR GAZE CONTINGENT DISPLAY:
-    - create both foreground and background bitmaps
-    - uses the eyelink_newest_float_sample() to get latest update
-    - initialize window with initialize_gc_window()
-    - moves window with redraw_gc_window()
-
-    Run gaze-contingent window trial
-    <fgbm> is bitmap to display within window
-    <bgbm> is bitmap to display outside window
-    <wwidth, wheight> is size of window in pixels
-    <mask> flags whether to treat window as a mask
-    <time_limit> is the maximum time the stimuli are displayed
-*/
+ *  Run a single trial, recording to EDF file and sending data through link
+ *  This example draws to a bitmap, then copies it to display for fast stimulus
+ *  onset
+ *
+ *   The order of operations is:
+ *  - Set trial title, ID for analysis
+ *  - Draw foreground, background bitmaps and create EyeLink display graphics
+ *  - Drift correction
+ *  - start recording
+ *  - <DON'T copy bitmap to display: draw window when first sample arrives>
+ *  - loop till button press, timeout, or abort, drawing gaze contingent window
+ *  - stop recording, dispose of bitmaps, handle abort and exit
+ *
+ *  NEW CODE FOR GAZE CONTINGENT DISPLAY:
+ *  - create both foreground and background bitmaps
+ *  - uses the eyelink_newest_float_sample() to get latest update
+ *  - initialize window with initialize_gc_window()
+ *  - moves window with redraw_gc_window()
+ *
+ *  Run gaze-contingent window trial
+ *  <fgbm> is bitmap to display within window
+ *  <bgbm> is bitmap to display outside window
+ *  <wwidth, wheight> is size of window in pixels
+ *  <mask> flags whether to treat window as a mask
+ *  <time_limit> is the maximum time the stimuli are displayed
+ */
 int gc_window_trial(SDL_Surface *fgbm,
                     SDL_Surface *bgbm,
                     int wwidth,
                     int wheight,
-                    int mask,
                     UINT32 time_limit) {
     UINT32 trial_start = 0; /* trial start time (for timeout) */
     UINT32 drawing_time;    /* retrace-to-draw delay */
@@ -74,6 +74,8 @@ int gc_window_trial(SDL_Surface *fgbm,
     int first_display = 1; /* used to determine first drawing of display */
     int eye_used = 0;      /* indicates which eye's data to display */
     float x, y;            /* gaze position */
+    float x_prev, y_prev;  /* previous gaze position */
+    int triggered = 0;
 
     /*
      * NOTE: TRIALID AND TITLE MUST HAVE BEEN SET BEFORE DRIFT CORRECTION!
@@ -100,8 +102,9 @@ int gc_window_trial(SDL_Surface *fgbm,
             break;
     }
 
-    clear_full_screen_window(
-        target_background_color); /* make sure display is blank */
+    /* make sure display is blank */
+    SDL_Color black = {0, 0, 0};
+    clear_full_screen_window(black);
 
     // ensure the eye tracker has enough time to switch modes (to start
     // recording).
@@ -126,17 +129,18 @@ int gc_window_trial(SDL_Surface *fgbm,
     SDL_BlitSurface(bgbm, NULL, window, NULL);
     initialize_dynamic_cursor(window, min(wwidth, wheight), fgbm);
 
-    if (!eyelink_wait_for_block_start(
-            100, 1, 0)) /* wait for link sample data */
-    {
+    /* wait for link sample data */
+    if (!eyelink_wait_for_block_start(100, 1, 0)) {
         end_trial();
         alert_printf("ERROR: No link samples received!");
         return TRIAL_ERROR;
     }
-    eye_used =
-        eyelink_eye_available(); /* determine which eye(s) are available */
-    switch (eye_used)            /* select eye, add annotation to EDF file */
-    {
+
+    /* determine which eye(s) are available */
+    eye_used = eyelink_eye_available();
+
+    /* select eye, add annotation to EDF file */
+    switch (eye_used) {
         case RIGHT_EYE:
             eyemsg_printf("EYE_USED 1 RIGHT");
             break;
@@ -149,14 +153,12 @@ int gc_window_trial(SDL_Surface *fgbm,
     /* Now get ready for trial loop */
     eyelink_flush_keybuttons(0); /* reset keys and buttons from tracker  */
 
-    /*
-     * we don't use getkey() especially in a time-critical trial as Windows may
+    /* We don't use getkey() especially in a time-critical trial as Windows may
      * interrupt us and cause an unpredicatable delay so we would use buttons
      * or tracker keys only
      */
 
-    /*
-     * Trial loop: till timeout or response -- added code for reading samples
+    /* Trial loop: till timeout or response -- added code for reading samples
      * and moving cursor
      */
     while (1) { /* First, check if recording aborted  */
@@ -197,24 +199,41 @@ int gc_window_trial(SDL_Surface *fgbm,
         }
 
         /* NEW CODE FOR GAZE CONTINGENT WINDOW  */
-        if (eyelink_newest_float_sample(NULL) >
-            0) /* check for new sample update */
-        {
+        /* check for new sample update */
+        if (eyelink_newest_float_sample(NULL) > 0) {
             eyelink_newest_float_sample(&evt); /* get the sample  */
+
+            // Only trigger change when there is a large enough diff
+            if (abs(x - evt.fs.gx[eye_used]) < 25 &&
+                abs(y - evt.fs.gy[eye_used]) < 25) {
+                continue;
+            }
+
             x = evt.fs.gx[eye_used]; /* yes: get gaze position from sample  */
             y = evt.fs.gy[eye_used];
+
+            /* make sure pupil is present */
             if (x != MISSING_DATA && y != MISSING_DATA &&
-                evt.fs.pa[eye_used] > 0) /* make sure pupil is present */
-            {
+                evt.fs.pa[eye_used] > 0) {
                 if (first_display) /* mark display start AFTER first drawing of
                                       window */
                 {
-                    drawing_time = current_msec(); /* time of retrace */
-                    trial_start =
-                        drawing_time; /* record the display onset time  */
+                    /* time of retrace */
+                    drawing_time = current_msec();
+
+                    /* record the display onset time */
+                    trial_start = drawing_time;
                 }
 
-                draw_gaze_cursor((int)x, (int)y); /* move window if visible */
+                // Show the white square
+                if (!first_display && !triggered) {
+                    /* move window if visible */
+                    /* draw_gaze_cursor((int)x, (int)y); */
+
+                    // Draw the window at the top left corner
+                    draw_gaze_cursor(25, 25);
+                    triggered = 1;
+                }
 
                 if (first_display) /* mark display start AFTER first drawing of
                                       window */
@@ -233,9 +252,7 @@ int gc_window_trial(SDL_Surface *fgbm,
                 }
 
             } else {
-                /*
-                    Don't move window during blink
-                 */
+                /* Don't move window during blink */
             }
         }
     } /* END OF RECORDING LOOP */
