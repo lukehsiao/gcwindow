@@ -122,8 +122,8 @@ int do_gcwindow_trial() {
             BX_MAXCONTRAST |
             ((eyelink_get_tracker_version(NULL) >= 2) ? 0 : BX_GRAYSCALE)));
 
-    /* Small 50x50px window */
-    i = gc_window_trial(fgbm, bgbm, 50, 50, 60000L);
+    /* Small WINDOW_SIZExWINDOW_SIZE px window */
+    i = gc_window_trial(fgbm, bgbm, WINDOW_SIZE, WINDOW_SIZE, 60000L);
     SDL_FreeSurface(fgbm);
     fgbm = NULL;
     SDL_FreeSurface(bgbm);

@@ -204,8 +204,8 @@ int gc_window_trial(SDL_Surface *fgbm,
             eyelink_newest_float_sample(&evt); /* get the sample  */
 
             // Only trigger change when there is a large enough diff
-            if (abs(x - evt.fs.gx[eye_used]) < 25 &&
-                abs(y - evt.fs.gy[eye_used]) < 25) {
+            if (abs(x - evt.fs.gx[eye_used]) < DIFF_THRESH &&
+                abs(y - evt.fs.gy[eye_used]) < DIFF_THRESH) {
                 continue;
             }
 
@@ -231,7 +231,7 @@ int gc_window_trial(SDL_Surface *fgbm,
                     /* draw_gaze_cursor((int)x, (int)y); */
 
                     // Draw the window at the top left corner
-                    draw_gaze_cursor(25, 25);
+                    draw_gaze_cursor(WINDOW_SIZE/2, WINDOW_SIZE/2);
                     triggered = 1;
                 }
 

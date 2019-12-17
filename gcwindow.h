@@ -24,6 +24,9 @@
 #include <sdl_expt.h>
 #endif
 
+#define WINDOW_SIZE 50 /* Dimensions of the white square */
+#define DIFF_THRESH 25 /* Abs diff for either x or y to change before trigger */
+
 extern DISPLAYINFO
     dispinfo;               /* display information: size, colors, refresh rate*/
 extern SDL_Surface *window; /* SDL surface for drawing */
