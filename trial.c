@@ -83,24 +83,8 @@ int gc_window_trial(SDL_Surface *fgbm,
      * SOFTWARE!
      */
 
-    /*
-     * DO PRE-TRIAL DRIFT CORRECTION
-     * We repeat if ESC key pressed to do setup.
-     */
-
-    while (1) { /* Check link often so we can exit if tracker stopped */
-        if (!eyelink_is_connected())
-            return ABORT_EXPT;
-        /*
-         * We let do_drift_correct() draw target in this example 3rd argument
-         * would be 0 if we already drew the display
-         */
-        error = do_drift_correct(
-            (INT16)(SCRWIDTH / 2), (INT16)(SCRHEIGHT / 2), 1, 1);
-        /* repeat if ESC was pressed to access Setup menu  */
-        if (error != 27)
-            break;
-    }
+    if (!eyelink_is_connected())
+        return ABORT_EXPT;
 
     /* make sure display is blank */
     SDL_Color black = {0, 0, 0};

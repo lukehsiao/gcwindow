@@ -162,7 +162,7 @@ int run_trials(void) {
     eyemsg_printf("TRIAL_VAR_LABELS TYPE CENTRAL PERIPHERAL");
 
     /* PERFORM CAMERA SETUP, CALIBRATION */
-    do_tracker_setup();
+    // do_tracker_setup();
 
     /* Single trial for the latency measurement */
     /* drop out if link closed */
