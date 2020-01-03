@@ -19,24 +19,20 @@
  * file with a new name, and change the the new file.                          *
  *******************************************************************************/
 
- 
-
 #ifndef __SR_RESEARCH_SDL_TEXT_SUPPORT_H__
 #define __SR_RESEARCH_SDL_TEXT_SUPPORT_H__
 #include <SDL/SDL.h>
 
-#ifdef __cplusplus     /* For C++ compilation */
+#ifdef __cplusplus /* For C++ compilation */
 extern "C" {
 #endif
 
-typedef enum
-{
-	NONE          = 0x000, /* no justification. just place the text a the given point */
-	JUSTIFY_RIGHT = 0x001, /* right justify the text */
-	CENTER        = 0x010, /* horizontally center the text */
-	WRAP          = 0x100  /* wrap the text if it cannot fit in one line. */
+typedef enum {
+    NONE = 0x000, /* no justification. just place the text a the given point */
+    JUSTIFY_RIGHT = 0x001, /* right justify the text */
+    CENTER = 0x010,        /* horizontally center the text */
+    WRAP = 0x100           /* wrap the text if it cannot fit in one line. */
 } PRINTFORMAT;
-
 
 /*****************************************************************************
  * Function: set_margin
@@ -83,8 +79,13 @@ int get_new_font(const char *fontname, int font_size, int bold);
  * Purpose:
  *		Printf like print utility function
  *****************************************************************************/
-void graphic_printf(const SDL_Surface *surface, SDL_Color fg, int format, int x, 
-					int y, const char *fmt, ...);
+void graphic_printf(const SDL_Surface *surface,
+                    SDL_Color fg,
+                    int format,
+                    int x,
+                    int y,
+                    const char *fmt,
+                    ...);
 
 /*****************************************************************************
  * Function: get_font_height
@@ -95,13 +96,12 @@ void graphic_printf(const SDL_Surface *surface, SDL_Color fg, int format, int x,
  *****************************************************************************/
 int get_font_height();
 /*
- * Returns the resources path for the application 
+ * Returns the resources path for the application
  */
-char * get_resources_path();
+char *get_resources_path();
 
-#ifdef __cplusplus     /* For C++ compilation */
+#ifdef __cplusplus /* For C++ compilation */
 }
 #endif
 
 #endif
-	
