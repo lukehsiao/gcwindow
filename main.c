@@ -16,8 +16,8 @@
  *****************************************************************************/
 
 #include "gcwindow.h"
+#include "sdl_text_support.h"
 
-#include <sdl_text_support.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef WIN32

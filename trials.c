@@ -16,8 +16,8 @@
  *****************************************************************************/
 
 #include "gcwindow.h"
+#include "sdl_text_support.h"
 
-#include <sdl_text_support.h>
 #ifdef MACOSX
 #include <SDL_gfx/SDL_rotozoom.h>
 #include <SDL_image/SDL_image.h>
