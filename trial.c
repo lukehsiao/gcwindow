@@ -231,7 +231,7 @@ int gc_window_trial(SDL_Surface *fgbm,
                     /* draw_gaze_cursor((int)x, (int)y); */
 
                     // Draw the window at the top left corner
-                    draw_gaze_cursor(WINDOW_SIZE/2, WINDOW_SIZE/2);
+                    draw_gaze_cursor(WINDOW_SIZE / 2, WINDOW_SIZE / 2);
                     triggered = 1;
                 }
 
