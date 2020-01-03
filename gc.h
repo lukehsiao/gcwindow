@@ -19,19 +19,19 @@
  * file with a new name, and change the the new file.                          *
  *******************************************************************************/
 
-
 #ifndef __SR_RESEARCH_GAZECURSOR_H__
 #define __SR_RESEARCH_GAZECURSOR_H__
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /*******************************************************************************
  * Initialize the cursor sub system
  *******************************************************************************/
-void initialize_cursor(SDL_Surface * surface, int size);
-void initialize_dynamic_cursor(SDL_Surface * surface, int size, SDL_Surface *copySrc );
-
+void initialize_cursor(SDL_Surface *surface, int size);
+void initialize_dynamic_cursor(SDL_Surface *surface,
+                               int size,
+                               SDL_Surface *copySrc);
 
 /*******************************************************************************
  * Erases a existing cursor on the screen
@@ -48,4 +48,3 @@ void free_cursor();
 };
 #endif
 #endif
-

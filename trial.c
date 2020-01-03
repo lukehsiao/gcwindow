@@ -16,8 +16,8 @@
  *****************************************************************************/
 
 #include "gcwindow.h"
-#include "gc.h" /* use #include <gazecursor.h> for EyeLink version */
 
+#include "gc.h" /* use #include <gazecursor.h> for EyeLink version */
 #include <stdlib.h>
 
 /********* PERFORM AN EXPERIMENTAL TRIAL  *******/

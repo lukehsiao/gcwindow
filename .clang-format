@@ -20,6 +20,7 @@ IndentCaseLabels: true
 IndentWidth: 4
 KeepEmptyLinesAtTheStartOfBlocks: false
 PenaltyReturnTypeOnItsOwnLine: 200
+SortIncludes: false
 SpacesBeforeTrailingComments: 2
 TabWidth: 4
 UseTab: Never
