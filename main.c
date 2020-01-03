@@ -134,9 +134,9 @@ int app_main(char *trackerip, DISPLAYINFO *disp) {
 
     clear_full_screen_window(target_background_color); /* clear screen */
 #if defined(MACOSX)
-    get_new_font("Times New Roman", SCRHEIGHT / 32, 1); /* select a font */
+    get_new_font("Arial", SCRHEIGHT / 32, 1); /* select a font */
 #else
-    get_new_font("Times Roman", SCRHEIGHT / 32, 1);
+    get_new_font("Arial", SCRHEIGHT / 32, 1);
 #endif
     /* Draw text */
     graphic_printf(window,
