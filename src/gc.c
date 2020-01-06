@@ -21,21 +21,11 @@
  *******************************************************************************/
 
 #include <SDL/SDL.h>
-#ifndef __APPLE__  // MACOSX
 #define FLAGS SDL_HWSURFACE | SDL_HWACCEL | SDL_ASYNCBLIT
 #include <SDL_gfxPrimitives.h>
-#else
-#include <SDL_gfx/SDL_gfxPrimitives.h>
-#define FLAGS SDL_SWSURFACE
-#define transparent trans  // conflict with quicktime
-#endif
 #define UNDEFINED -32768
 #define ISPAGEFLIP(x) (x->flags & (SDL_HWSURFACE | SDL_DOUBLEBUF))
-#if defined(WIN32) && !defined(_WIN64)
-#define Flip(x) while (SDL_FlipEx(x) < 0)
-#else
 #define Flip(x) while (SDL_Flip(x) < 0)
-#endif
 
 SDL_Surface *main_window = NULL; /* main window */
 SDL_Surface *cursor = NULL;      /* motion cursor */

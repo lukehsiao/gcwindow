@@ -24,17 +24,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <SDL/SDL.h>
-#ifdef __APPLE__  // MACOSX
-#include <SDL_ttf/SDL_ttf.h>
-#else
 #include <SDL_ttf.h>
-#endif
 #include "fontmappings.h"
 #include "sdl_text_support.h"
-#ifndef WIN32
-#define min(x, y) (x > y) ? y : x
+#define min(x, y) (x < y) ? y : x
 #define _stricmp strcasecmp
-#endif
 
 static TTF_Font *font = NULL;
 #define FONTNAME "Arial.ttf"
@@ -67,45 +61,12 @@ char *get_font_file_name(const char *fontname) {
     }
     return FONTNAME;  // default font
 }
-#if defined(__APPLE__)  //(MACOSX) && defined(MACAPP)
-#include <CoreFoundation/CoreFoundation.h>
-#endif
-char *get_resources_path() {
-#if defined(WIN32)
-    return getenv("windir");
-#elif defined(__APPLE__)  // defined(MACOSX) && defined(MACAPP)
-    static char wd[1024] = {0};
-    if (!strlen(wd)) {
-        CFURLRef appRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-        CFStringRef appPath =
-            CFURLCopyFileSystemPath(appRef, kCFURLPOSIXPathStyle);
-        const char *pathPtr =
-            CFStringGetCStringPtr(appPath, CFStringGetSystemEncoding());
-        strcpy(wd, pathPtr);
-        strcat(wd, "/Contents/Resources");
-        return wd;
-    }
-    return wd;
 
-#else
-    return NULL;
-#endif
-}
 int get_new_font(const char *fontname, int font_size, int bold) {
     char fontpath[512] = {0};
     fontname = get_font_file_name(fontname);
     // printf("fontname is %s \n", fontname);
 
-    if (get_resources_path()) {
-        strcpy(fontpath, get_resources_path());
-#if defined(_WIN32) || defined(_WIN64)
-        strcat(fontpath, "\\");
-        strcat(fontpath, "Fonts\\");
-#else
-        strcat(fontpath, "/");
-#endif
-        // printf("after get resources path, footpath is %s\n", fontpath);
-    }
     strcat(fontpath, fontname);
 
     // printf("connect footpath and name is %s %s\n", fontpath, fontname);

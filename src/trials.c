@@ -18,13 +18,8 @@
 #include "gcwindow.h"
 #include "sdl_text_support.h"
 
-#ifdef MACOSX
-#include <SDL_gfx/SDL_rotozoom.h>
-#include <SDL_image/SDL_image.h>
-#else
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_rotozoom.h>
-#endif
 
 SDL_Color target_fg = {255, 255, 255};
 SDL_Color target_bg = {0, 0, 0};

@@ -27,53 +27,6 @@ typedef struct {
     char *font_face; /* not used for now */
 } FONT_MAP;
 
-#if defined(_WIN32) || defined(_WIN64)
-#define FONTMAPPINGS                                                           \
-    {                                                                          \
-        {"Arial.ttf", "Arial", "Regular"}, {"arialbd.ttf", "Arial", "Bold"},   \
-            {"arialbi.ttf", "Arial", "Bold Italic"},                           \
-            {"ariali.ttf", "Arial", "Italic"},                                 \
-            {"ariblk.ttf", "Arial Black", "Regular"},                          \
-            {"comic.ttf", "Comic Sans MS", "Regular"},                         \
-            {"comicbd.ttf", "Comic Sans MS", "Bold"},                          \
-            {"cour.ttf", "Courier New", "Regular"},                            \
-            {"courbd.ttf", "Courier New", "Bold"},                             \
-            {"courbi.ttf", "Courier New", "Bold Italic"},                      \
-            {"couri.ttf", "Courier New", "Italic"},                            \
-            {"georgia.ttf", "Georgia", "Regular"},                             \
-            {"georgiab.ttf", "Georgia", "Bold"},                               \
-            {"georgiai.ttf", "Georgia", "Italic"},                             \
-            {"georgiaz.ttf", "Georgia", "Bold Italic"},                        \
-            {"impact.ttf", "Impact", "Regular"},                               \
-            {"l_10646.ttf", "Lucida Sans Unicode", "Regular"},                 \
-            {"lucon.ttf", "Lucida Console", "Regular"},                        \
-            {"marlett.ttf", "Marlett", "Regular"},                             \
-            {"micross.ttf", "Microsoft Sans Serif", "Regular"},                \
-            {"pala.ttf", "Palatino Linotype", "Regular"},                      \
-            {"palab.ttf", "Palatino Linotype", "Bold"},                        \
-            {"palabi.ttf", "Palatino Linotype", "Bold Italic"},                \
-            {"palai.ttf", "Palatino Linotype", "Italic"},                      \
-            {"symbol.ttf", "Symbol", "Regular"},                               \
-            {"tahoma.ttf", "Tahoma", "Regular"},                               \
-            {"tahomabd.ttf", "Tahoma", "Bold"},                                \
-            {"times.ttf", "Times New Roman", "Regular"},                       \
-            {"timesbd.ttf", "Times New Roman", "Bold"},                        \
-            {"timesbi.ttf", "Times New Roman", "Bold Italic"},                 \
-            {"timesi.ttf", "Times New Roman", "Italic"},                       \
-            {"trebuc.ttf", "Trebuchet MS", "Regular"},                         \
-            {"trebucbd.ttf", "Trebuchet MS", "Bold"},                          \
-            {"trebucbi.ttf", "Trebuchet MS", "Bold Italic"},                   \
-            {"trebucit.ttf", "Trebuchet MS", "Italic"},                        \
-            {"verdana.ttf", "Verdana", "Regular"},                             \
-            {"verdanab.ttf", "Verdana", "Bold"},                               \
-            {"verdanai.ttf", "Verdana", "Italic"},                             \
-            {"verdanaz.ttf", "Verdana", "Bold Italic"},                        \
-            {"webdings.ttf", "Webdings", "Regular"},                           \
-            {"wingding.ttf", "Wingdings", "Regular"}, {                        \
-            0, 0, 0                                                            \
-        }                                                                      \
-    }
-#else
 #define FONTMAPPINGS                                                           \
     {                                                                          \
         {"Arial.ttf", "Arial", "Regular"}, {"arialbd.ttf", "Arial", "Bold"},   \
@@ -122,5 +75,4 @@ typedef struct {
         }                                                                      \
     }
 
-#endif
 #endif

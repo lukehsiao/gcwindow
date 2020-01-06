@@ -20,9 +20,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN32
-#include <w32_dialogs.h>
-#endif
 
 DISPLAYINFO dispinfo; /* display information: size, colors, refresh rate */
 /* Name for experiment: goes in task bar, and in EDF file */
@@ -82,13 +79,6 @@ int app_main(char *trackerip, DISPLAYINFO *disp) {
     int eyelink_ver = 0;
     int tracker_software_ver = 0;
 
-#ifdef WIN32
-    edit_dialog(NULL,
-                "Create EDF File",
-                "Enter Tracker EDF file name:",
-                our_file_name,
-                260);
-#endif
     if (trackerip)
         set_eyelink_address(trackerip);
     if (open_eyelink_connection(0))
@@ -133,11 +123,8 @@ int app_main(char *trackerip, DISPLAYINFO *disp) {
     set_dcorr_sounds("", "off", "off");
 
     clear_full_screen_window(target_background_color); /* clear screen */
-#if defined(MACOSX)
-    get_new_font("Arial", SCRHEIGHT / 32, 1); /* select a font */
-#else
     get_new_font("Arial", SCRHEIGHT / 32, 1);
-#endif
+
     /* Draw text */
     graphic_printf(window,
                    target_foreground_color,
@@ -286,17 +273,7 @@ int parseArgs(int argc, char **argv, char **trackerip, DISPLAYINFO *disp) {
         return 1;
     return 0;
 }
-#if defined(WIN32) && !defined(_CONSOLE)
-/* WinMain - Windows calls this to execute application */
-int PASCAL WinMain(HINSTANCE hInstance,
-                   HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine,
-                   int nCmdShow) {
-    app_main(NULL, NULL); /* call our real program */
-    return 0;
-}
-#else
-/* non windows application or win32 console application. */
+
 int main(int argc, char **argv) {
     DISPLAYINFO disp;
     char *trackerip = NULL;
@@ -312,4 +289,3 @@ int main(int argc, char **argv) {
         app_main(trackerip, NULL);
     return 0;
 }
-#endif

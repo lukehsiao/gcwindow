@@ -18,11 +18,7 @@
 #ifndef __SR_RESEARCH__GCWINDOW_H__
 #define __SR_RESEARCH__GCWINDOW_H__
 
-#ifdef MACOSX
-#include <eyelink_core_graphics/sdl_expt.h>
-#else
 #include <sdl_expt.h>
-#endif
 
 #define WINDOW_SIZE 50 /* Dimensions of the white square */
 #define DIFF_THRESH 25 /* Abs diff for x or y to change before trigger */
@@ -50,12 +46,6 @@ int gc_window_trial(SDL_Surface *fgbm,
     c.r = x;                                                                   \
     c.g = y;                                                                   \
     c.b = z;
-#ifndef WIN32
 #define _stricmp strcasecmp
 #define min(a, b) ((a) < (b)) ? a : b
-#endif
-#ifdef MACOSX
-#undef SDL_HWSURFACE
-#define SDL_HWSURFACE SDL_SWSURFACE /* mac does not hwsurface */
-#endif
 #endif
