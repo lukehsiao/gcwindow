@@ -305,10 +305,11 @@ int main(int argc, char **argv) {
         return rv;
 
     if (disp.width)
-        app_main(trackerip, &disp); /* call our real program */
+        /* call our real program */
+        app_main(trackerip, &disp);
     else
-        app_main(trackerip,
-                 NULL); /* call our real program - no display parameters set*/
+        /* call our real program - no display parameters set*/
+        app_main(trackerip, NULL);
     return 0;
 }
 #endif
