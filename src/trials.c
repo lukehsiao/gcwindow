@@ -29,11 +29,10 @@ SDL_Color target_bg = {0, 0, 0};
 SDL_Surface *fgbm = NULL;
 SDL_Surface *bgbm = NULL;
 
-/*
-    Creates blank surfaces
-    If hwsurface == 1 then fgbm is hwsurface
-    if hwsurface == 2 then bgbm is hwsurface.
-*/
+/*  Creates blank surfaces
+ *  If hwsurface == 1 then fgbm is hwsurface
+ *  if hwsurface == 2 then bgbm is hwsurface.
+ */
 SDL_Surface *blank_bitmap(SDL_Color c, int hwsurface, int width, int height) {
     SDL_Surface *surface = SDL_CreateRGBSurface(
         (hwsurface == 1) ? (SDL_HWSURFACE | SDL_ASYNCBLIT) : SDL_SWSURFACE,
@@ -49,9 +48,9 @@ SDL_Surface *blank_bitmap(SDL_Color c, int hwsurface, int width, int height) {
 }
 
 /*  Create foreground and background bitmaps of picture
-    EyeLink graphics: blank display with box at center
-    type: 0 = blank background, 1= blank fovea (mask), 2 = blurred background
-*/
+ *  EyeLink graphics: blank display with box at center
+ *  type: 0 = blank background, 1 = blank fovea (mask), 2 = blurred background
+ */
 static int create_image_bitmaps() {
     clear_full_screen_window(target_bg);
 
@@ -81,16 +80,16 @@ static int create_image_bitmaps() {
 
 /*********** TRIAL SELECTOR **********/
 /*  FOR EACH TRIAL:
-    - set title, TRIALID
-    - Create bitmaps and EyeLink display graphics
-    - Check for errors in creating bitmaps
-    - Run the trial recording loop
-    - Delete bitmaps
-    - Return any error code
-
-      Given trial number, execute trials
-      Returns trial result code
-*/
+ *  - set title, TRIALID
+ *  - Create bitmaps and EyeLink display graphics
+ *  - Check for errors in creating bitmaps
+ *  - Run the trial recording loop
+ *  - Delete bitmaps
+ *  - Return any error code
+ *
+ *    Given trial number, execute trials
+ *    Returns trial result code
+ */
 int do_gcwindow_trial() {
     int i;
 
