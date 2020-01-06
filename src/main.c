@@ -23,7 +23,7 @@
 
 DISPLAYINFO dispinfo; /* display information: size, colors, refresh rate */
 /* Name for experiment: goes in task bar, and in EDF file */
-char program_name[100] = "Eyelink Sample Experiment 2.0";
+char program_name[100] = "Eyelink Gaze-Contingent Latency Experiment";
 SDL_Surface *window = NULL;
 
 /*The colors of the target and background for calibration and drift correct */
@@ -131,25 +131,7 @@ int app_main(char *trackerip, DISPLAYINFO *disp) {
                    CENTER,
                    SCRWIDTH / 2,
                    1 * SCRHEIGHT / 30,
-                   "EyeLink Demonstration Experiment: Sample Code");
-    graphic_printf(window,
-                   target_foreground_color,
-                   CENTER,
-                   SCRWIDTH / 2,
-                   2 * SCRHEIGHT / 30,
-                   "Included with the Experiment Programming Kit for Windows");
-    graphic_printf(window,
-                   target_foreground_color,
-                   CENTER,
-                   SCRWIDTH / 2,
-                   3 * SCRHEIGHT / 30,
-                   "All code is Copyright (c) 1997-2013 SR Research Ltd.");
-    graphic_printf(window,
-                   target_foreground_color,
-                   CENTER,
-                   SCRWIDTH / 5,
-                   4 * SCRHEIGHT / 30,
-                   "Source code may be used as template for your experiments.");
+                   "EyeLink Gaze-Contingent Latency Experiment");
 
     SDL_Flip(window);
     if (our_file_name[0]) /* If file name set, open it */
