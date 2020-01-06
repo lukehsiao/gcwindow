@@ -192,6 +192,7 @@ int gc_window_trial(SDL_Surface *fgbm,
                 abs(y - evt.fs.gy[eye_used]) < DIFF_THRESH) {
                 continue;
             }
+            Uint32 start = SDL_GetTicks();
 
             x = evt.fs.gx[eye_used]; /* yes: get gaze position from sample  */
             y = evt.fs.gy[eye_used];
@@ -216,6 +217,8 @@ int gc_window_trial(SDL_Surface *fgbm,
 
                     // Draw the window at the top left corner
                     draw_gaze_cursor(WINDOW_SIZE / 2, WINDOW_SIZE / 2);
+                    printf("Detection to Draw time: %d ms \n",
+                           SDL_GetTicks() - start);
                     triggered = 1;
                 }
 
