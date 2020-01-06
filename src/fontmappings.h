@@ -27,7 +27,7 @@ typedef struct {
     char *font_face; /* not used for now */
 } FONT_MAP;
 
-#ifdef _WIN32 || _WIN64
+#if defined(_WIN32) || defined(_WIN64)
 #define FONTMAPPINGS                                                           \
     {                                                                          \
         {"Arial.ttf", "Arial", "Regular"}, {"arialbd.ttf", "Arial", "Bold"},   \

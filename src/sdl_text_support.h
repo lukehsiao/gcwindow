@@ -79,7 +79,7 @@ int get_new_font(const char *fontname, int font_size, int bold);
  * Purpose:
  *		Printf like print utility function
  *****************************************************************************/
-void graphic_printf(const SDL_Surface *surface,
+void graphic_printf(SDL_Surface *surface,
                     SDL_Color fg,
                     int format,
                     int x,

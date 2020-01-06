@@ -58,7 +58,7 @@ void set_margin(int left, int right, int top, int bottom) {
 
 void adjustPlacement(SDL_Rect *rect, int scrwidth, int format);
 
-char *get_font_file_name(char *fontname) {
+char *get_font_file_name(const char *fontname) {
     int i = 0;
     for (; fontmap[i].filename && fontmap[i].font_face && fontmap[i].font_name;
          i++) {
@@ -91,14 +91,14 @@ char *get_resources_path() {
     return NULL;
 #endif
 }
-int get_new_font(char *fontname, int font_size, int bold) {
+int get_new_font(const char *fontname, int font_size, int bold) {
     char fontpath[512] = {0};
     fontname = get_font_file_name(fontname);
     // printf("fontname is %s \n", fontname);
 
     if (get_resources_path()) {
         strcpy(fontpath, get_resources_path());
-#ifdef _WIN32 || _WIN64
+#if defined(_WIN32) || defined(_WIN64)
         strcat(fontpath, "\\");
         strcat(fontpath, "Fonts\\");
 #else
