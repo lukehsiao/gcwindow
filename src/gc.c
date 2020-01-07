@@ -20,12 +20,13 @@
  * file with a new name, and change the the new file.                          *
  *******************************************************************************/
 
+#include "gcwindow.h"
+
 #include <SDL/SDL.h>
 #define FLAGS SDL_HWSURFACE | SDL_HWACCEL | SDL_ASYNCBLIT
 #include <SDL_gfxPrimitives.h>
 #define UNDEFINED -32768
 #define ISPAGEFLIP(x) (x->flags & (SDL_HWSURFACE | SDL_DOUBLEBUF))
-#define Flip(x) while (SDL_Flip(x) < 0)
 
 SDL_Surface *main_window = NULL; /* main window */
 SDL_Surface *cursor = NULL;      /* motion cursor */
@@ -35,7 +36,7 @@ SDL_Rect last = {UNDEFINED,
                  UNDEFINED,
                  UNDEFINED}; /* last cursor position */
 SDL_Rect current = {UNDEFINED, UNDEFINED, UNDEFINED, UNDEFINED};
-SDL_Rect cursorrect = {0, 0, 130, 130}; /* cursor size */
+SDL_Rect cursorrect = {0, 0, WINDOW_SIZE, WINDOW_SIZE}; /* cursor size */
 SDL_Surface *main_clone = NULL;
 SDL_Color transparent = {255, 255, 255, 255};
 
@@ -113,7 +114,7 @@ int draw_gaze_cursor(int x, int y) {
         SDL_BlitSurface(cursor, NULL, main_window, &rct);
     else if (src)
         SDL_BlitSurface(src, &rct, main_window, &rct);
-    Flip(main_window);
+    SDL_UpdateRect(main_window, 0, 0, WINDOW_SIZE, WINDOW_SIZE);
     if (ISPAGEFLIP(main_window)) {
         last = current;
         current = rct;
