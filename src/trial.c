@@ -74,7 +74,9 @@ int gc_window_trial(SDL_Surface *fgbm,
     int first_display = 1; /* used to determine first drawing of display */
     int eye_used = 0;      /* indicates which eye's data to display */
     float x, y;            /* gaze position */
-    float x_prev, y_prev;  /* previous gaze position */
+    float x_new, y_new;    /* new gaze sample */
+    int valid = 0;         /* track whether a valid gaze sample is obtained */
+    MICRO m1, m2;
     int triggered = 0;
 
     SDL_version compiled;
@@ -151,6 +153,22 @@ int gc_window_trial(SDL_Surface *fgbm,
      * or tracker keys only
      */
 
+    /* First, initialize with a single valid sample. */
+    while (!valid) {
+        if (eyelink_newest_float_sample(NULL) > 0) {
+            eyelink_newest_float_sample(&evt); /* get the sample  */
+
+            x = evt.fs.gx[eye_used]; /* yes: get gaze position from sample  */
+            y = evt.fs.gy[eye_used];
+
+            /* make sure pupil is present */
+            if (x != MISSING_DATA && y != MISSING_DATA &&
+                evt.fs.pa[eye_used] > 0) {
+                valid = 1;
+            }
+        }
+    }
+
     /* Trial loop: till timeout or response -- added code for reading samples
      * and moving cursor
      */
@@ -196,15 +214,9 @@ int gc_window_trial(SDL_Surface *fgbm,
         if (eyelink_newest_float_sample(NULL) > 0) {
             eyelink_newest_float_sample(&evt); /* get the sample  */
 
-            // Only trigger change when there is a large enough diff
-            if (abs(x - evt.fs.gx[eye_used]) < DIFF_THRESH &&
-                abs(y - evt.fs.gy[eye_used]) < DIFF_THRESH) {
-                continue;
-            }
-            Uint32 start = SDL_GetTicks();
-
-            x = evt.fs.gx[eye_used]; /* yes: get gaze position from sample  */
-            y = evt.fs.gy[eye_used];
+            x_new =
+                evt.fs.gx[eye_used]; /* yes: get gaze position from sample  */
+            y_new = evt.fs.gy[eye_used];
 
             /* make sure pupil is present */
             if (x != MISSING_DATA && y != MISSING_DATA &&
@@ -219,15 +231,21 @@ int gc_window_trial(SDL_Surface *fgbm,
                     trial_start = drawing_time;
                 }
 
-                // Show the white square
-                if (!first_display && !triggered) {
-                    /* move window if visible */
-                    /* draw_gaze_cursor((int)x, (int)y); */
-
+                // Show the white square.
+                // Only trigger change when there is a large enough diff
+                if (abs(x - x_new) >= DIFF_THRESH &&
+                    abs(y - y_new) >= DIFF_THRESH && !triggered) {
+                    current_micro(&m1);
                     // Draw the window at the top left corner
                     draw_gaze_cursor(WINDOW_SIZE / 2, WINDOW_SIZE / 2);
-                    printf("Detection to Draw time: %d ms \n",
-                           SDL_GetTicks() - start);
+                    current_micro(&m2);
+
+                    printf("Drawing delay: %6.3f ms\n",
+                           m2.msec + m2.usec / 1000.0 - m1.msec +
+                               m1.usec / 1000.0);
+
+                    x = x_new;
+                    y = y_new;
                     triggered = 1;
                 }
 
