@@ -77,6 +77,14 @@ int gc_window_trial(SDL_Surface *fgbm,
     float x_prev, y_prev;  /* previous gaze position */
     int triggered = 0;
 
+    SDL_version compiled;
+
+    SDL_VERSION(&compiled);
+    printf("We compiled against SDL version %d.%d.%d ...\n",
+           compiled.major,
+           compiled.minor,
+           compiled.patch);
+
     /*
      * NOTE: TRIALID AND TITLE MUST HAVE BEEN SET BEFORE DRIFT CORRECTION!
      * FAILURE TO INCLUDE THESE MAY CAUSE INCOMPATIBILITIES WITH ANALYSIS
@@ -106,8 +114,9 @@ int gc_window_trial(SDL_Surface *fgbm,
     if (error != 0)
         return error; /* ERROR: couldn't start recording */
                       /* record for 100 msec before displaying stimulus */
-    begin_realtime_mode(
-        100); /* Windows 2000/XP: no interruptions from now on */
+
+    /* Windows 2000/XP: no interruptions from now on */
+    begin_realtime_mode(100);
 
     /* DONT DISPLAY OUR IMAGES TO SUBJECT until we have first gaze postion! */
     SDL_BlitSurface(bgbm, NULL, window, NULL);
