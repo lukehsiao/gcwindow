@@ -15,88 +15,73 @@
  * For use with Version 2.0 of EyeLink Windows API                           *
  *****************************************************************************/
 
+#include "gc.h"  // use #include <gazecursor.h> for EyeLink version
 #include "gcwindow.h"
 
-#include "gc.h" /* use #include <gazecursor.h> for EyeLink version */
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
 
-/********* PERFORM AN EXPERIMENTAL TRIAL  *******/
-
-/* End recording: adds 100 msec of data to catch final events */
+/**
+ * End recording: adds 100 msec of data to catch final events
+ */
 static void end_trial(void) {
-    clear_full_screen_window(target_background_color); /* hide display */
-    end_realtime_mode(); /* NEW: ensure we release realtime lock */
-    pump_delay(100);     /* CHANGED: allow Windows to clean up   */
-                         /* while we record additional 100 msec of data  */
+    clear_full_screen_window(target_background_color);  // hide display
+    pump_delay(100);  // provide a small amount of delay for last data
     stop_recording();
     while (getkey()) {
     };
 }
 
-/*
- *  Run a single trial, recording to EDF file and sending data through link
- *  This example draws to a bitmap, then copies it to display for fast stimulus
- *  onset
+/**
+ * Run a single trial, recording to EDF file and sending data through link This
+ * example draws to a bitmap, then copies it to display for fast stimulus onset
  *
- *   The order of operations is:
- *  - Set trial title, ID for analysis
- *  - Draw foreground, background bitmaps and create EyeLink display graphics
- *  - Drift correction
- *  - start recording
- *  - <DON'T copy bitmap to display: draw window when first sample arrives>
- *  - loop till button press, timeout, or abort, drawing gaze contingent window
- *  - stop recording, dispose of bitmaps, handle abort and exit
+ * The order of operations is:
+ * - create both foreground and background bitmaps
+ * - uses the eyelink_newest_float_sample() to get latest update
+ * - initialize window with initialize_gc_window()
+ * - moves window with redraw_gc_window()
  *
- *  NEW CODE FOR GAZE CONTINGENT DISPLAY:
- *  - create both foreground and background bitmaps
- *  - uses the eyelink_newest_float_sample() to get latest update
- *  - initialize window with initialize_gc_window()
- *  - moves window with redraw_gc_window()
- *
- *  Run gaze-contingent window trial
- *  <fgbm> is bitmap to display within window
- *  <bgbm> is bitmap to display outside window
- *  <wwidth, wheight> is size of window in pixels
- *  <mask> flags whether to treat window as a mask
- *  <time_limit> is the maximum time the stimuli are displayed
+ * @param fgmb       The bitmap to display within window.
+ * @param bgbm       The bitmap to display outside window.
+ * @param wwidth     The width of the window in pixels.
+ * @param wheight    The height of the window in pixels.
+ * @param mask       Flags whether to treat window as a mask.
+ * @param time_limit The maximum time the stimuli are displayed.
  */
 int gc_window_trial(SDL_Surface *fgbm,
                     SDL_Surface *bgbm,
                     int wwidth,
                     int wheight,
-                    UINT32 time_limit) {
-    UINT32 trial_start = 0; /* trial start time (for timeout) */
-    UINT32 drawing_time;    /* retrace-to-draw delay */
-    int button;             /* the button pressed (0 if timeout) */
-    int error;              /* trial result code */
+                    UINT32 time_limit,
+                    int fd) {
+    UINT32 trial_start = 0;  // trial start time (for timeout)
+    UINT32 drawing_time;     // retrace-to-draw delay
+    int button;              // the button pressed (0 if timeout)
+    int error;               // trial result code
 
-    ALLF_DATA evt;         /* buffer to hold sample and event data */
-    int first_display = 1; /* used to determine first drawing of display */
-    int eye_used = 0;      /* indicates which eye's data to display */
-    float x, y;            /* gaze position */
-    float x_new, y_new;    /* new gaze sample */
-    int valid = 0;         /* track whether a valid gaze sample is obtained */
-    MICRO m1, m2;
-    int triggered = 0;
+    ALLF_DATA evt;          // buffer to hold sample and event data
+    int first_display = 1;  // used to determine first drawing of display
+    int eye_used = 0;       // indicates which eye's data to display
+    float x, y;             // gaze position
+    float x_new, y_new;     // new gaze sample
+    int valid = 0;          // track whether a valid gaze sample is obtained
+    MICRO m1, m2;           // Used to calculate drawing time
+    int triggered = 0;      // Flag when the change has been triggered
+    unsigned char buf[64];  // Store serial data from Arduino
+    int rdlen, wlen;        // Number of bytes read and written
+    unsigned char *p;       // pointer for manupulating recieved string
 
-    SDL_version compiled;
-
-    SDL_VERSION(&compiled);
-    printf("We compiled against SDL version %d.%d.%d ...\n",
-           compiled.major,
-           compiled.minor,
-           compiled.patch);
-
-    /*
-     * NOTE: TRIALID AND TITLE MUST HAVE BEEN SET BEFORE DRIFT CORRECTION!
-     * FAILURE TO INCLUDE THESE MAY CAUSE INCOMPATIBILITIES WITH ANALYSIS
-     * SOFTWARE!
-     */
-
+    // Double check everything is connected
     if (!eyelink_is_connected())
         return ABORT_EXPT;
 
-    /* make sure display is blank */
+    // make sure display is blank
     SDL_Color black = {0, 0, 0};
     clear_full_screen_window(black);
 
@@ -105,63 +90,39 @@ int gc_window_trial(SDL_Surface *fgbm,
     set_offline_mode();
     pump_delay(50);
 
-    /*
-     *  Start data recording to EDF file, BEFORE DISPLAYING STIMULUS
-     *  You should always start recording 50-100 msec before required
-     *  otherwise you may lose a few msec of data
-     *
-     *  tell start_recording() to send link data
-     */
-    error = start_recording(1, 1, 1, 1); /* record with link data enabled */
+    // Start data recording to EDF file, BEFORE DISPLAYING STIMULUS. You should
+    // always start recording 50-100 msec before required otherwise you may
+    // lose a few msec of data.
+    error = start_recording(1, 1, 1, 1);  // record with link data enabled
     if (error != 0)
-        return error; /* ERROR: couldn't start recording */
-                      /* record for 100 msec before displaying stimulus */
+        return error;
 
-    /* Windows 2000/XP: no interruptions from now on */
-    begin_realtime_mode(100);
-
-    /* DONT DISPLAY OUR IMAGES TO SUBJECT until we have first gaze postion! */
+    // DONT DISPLAY OUR IMAGES TO SUBJECT until we have first gaze postion!
     SDL_BlitSurface(bgbm, NULL, window, NULL);
     initialize_dynamic_cursor(window, min(wwidth, wheight), fgbm);
 
-    /* wait for link sample data */
+    // wait for link sample data
     if (!eyelink_wait_for_block_start(100, 1, 0)) {
         end_trial();
         alert_printf("ERROR: No link samples received!");
         return TRIAL_ERROR;
     }
 
-    /* determine which eye(s) are available */
+    // determine which eye(s) are available
     eye_used = eyelink_eye_available();
 
-    /* select eye, add annotation to EDF file */
-    switch (eye_used) {
-        case RIGHT_EYE:
-            eyemsg_printf("EYE_USED 1 RIGHT");
-            break;
-        case BINOCULAR: /* both eye's data present: use left eye only */
-            eye_used = LEFT_EYE;
-        case LEFT_EYE:
-            eyemsg_printf("EYE_USED 0 LEFT");
-            break;
-    }
-    /* Now get ready for trial loop */
-    eyelink_flush_keybuttons(0); /* reset keys and buttons from tracker  */
+    // reset keys and buttons from tracker
+    eyelink_flush_keybuttons(0);
 
-    /* We don't use getkey() especially in a time-critical trial as Windows may
-     * interrupt us and cause an unpredicatable delay so we would use buttons
-     * or tracker keys only
-     */
-
-    /* First, initialize with a single valid sample. */
+    // First, initialize with a single valid sample.
     while (!valid) {
         if (eyelink_newest_float_sample(NULL) > 0) {
-            eyelink_newest_float_sample(&evt); /* get the sample  */
+            eyelink_newest_float_sample(&evt);
 
-            x = evt.fs.gx[eye_used]; /* yes: get gaze position from sample  */
+            x = evt.fs.gx[eye_used];
             y = evt.fs.gy[eye_used];
 
-            /* make sure pupil is present */
+            // make sure pupil is present
             if (x != MISSING_DATA && y != MISSING_DATA &&
                 evt.fs.pa[eye_used] > 0) {
                 valid = 1;
@@ -169,77 +130,75 @@ int gc_window_trial(SDL_Surface *fgbm,
         }
     }
 
-    /* Trial loop: till timeout or response -- added code for reading samples
-     * and moving cursor
-     */
-    while (1) { /* First, check if recording aborted  */
-        if ((error = check_recording()) != 0)
+    // Send Arduino the command to switch LEDs
+    wlen = write(fd, "g\n", 2);
+    if (wlen != 2) {
+        printf("Error from write: %d, %d\n", wlen, errno);
+        end_trial();
+        return TRIAL_ERROR;
+    }
+    if (tcdrain(fd) != 0) {
+        printf("Error from tcdrain: %s\n", strerror(errno));
+        end_trial();
+        return TRIAL_ERROR;
+    }
+
+    while (1) {
+        // First, check if recording aborted
+        if ((error = check_recording()) != 0) {
             return error;
-        /* Check if trial time limit expired */
+        }
+        // Check if trial time limit expired
         if (current_time() > trial_start + time_limit && trial_start != 0) {
-            eyemsg_printf("TIMEOUT"); /* message to log the timeout  */
-            end_trial();              /* local function to stop recording */
-            button = 0; /* trial result message is 0 if timeout  */
-            break;      /* exit trial loop */
+            printf("TIMEOUT\n");
+            end_trial();
+            button = 0;  // trial result message is 0 if timeout
+            break;
         }
 
-        if (break_pressed()) /* check for program termination or ALT-F4 or
-                                CTRL-C keys */
-        {
-            end_trial();       /* local function to stop recording */
-            return ABORT_EXPT; /* return this code to terminate experiment */
+        // check for program termination or ALT-F4 or CTRL-C keys
+        if (break_pressed()) {
+            end_trial();
+            return ABORT_EXPT;
         }
 
-        if (escape_pressed()) /* check for local ESC key to abort trial (useful
-                                 in debugging)    */
-        {
-            end_trial();       /* local function to stop recording */
-            return SKIP_TRIAL; /* return this code if trial terminated */
+        // check for local ESC key to abort trial (useful in debugging)
+        if (escape_pressed()) {
+            end_trial();
+            return SKIP_TRIAL;
         }
 
-        /* BUTTON RESPONSE TEST */
-        /* Check for eye-tracker buttons pressed */
-        /* This is the preferred way to get response data or end trials	 */
+        // Check for eye-tracker buttons pressed
+        // This is the preferred way to get response data or end trials
         button = eyelink_last_button_press(NULL);
-        if (button != 0) /* button number, or 0 if none pressed */
+        if (button != 0)  // button number, or 0 if none pressed
         {
-            eyemsg_printf("ENDBUTTON %d",
-                          button); /* message to log the button press */
-            end_trial();           /* local function to stop recording */
-            break;                 /* exit trial loop */
+            printf("ENDBUTTON %d\n", button);
+            end_trial();
+            break;
         }
 
-        /* NEW CODE FOR GAZE CONTINGENT WINDOW  */
-        /* check for new sample update */
+        // check for new sample update
         if (eyelink_newest_float_sample(NULL) > 0) {
-            eyelink_newest_float_sample(&evt); /* get the sample  */
+            eyelink_newest_float_sample(&evt);
 
-            x_new =
-                evt.fs.gx[eye_used]; /* yes: get gaze position from sample  */
+            x_new = evt.fs.gx[eye_used];
             y_new = evt.fs.gy[eye_used];
 
-            /* make sure pupil is present */
+            // make sure pupil is present
             if (x != MISSING_DATA && y != MISSING_DATA &&
                 evt.fs.pa[eye_used] > 0) {
-                if (first_display) /* mark display start AFTER first drawing of
-                                      window */
-                {
-                    /* time of retrace */
-                    drawing_time = current_msec();
-
-                    /* record the display onset time */
-                    trial_start = drawing_time;
-                }
-
                 // Show the white square.
                 // Only trigger change when there is a large enough diff
                 if (abs(x - x_new) >= DIFF_THRESH &&
                     abs(y - y_new) >= DIFF_THRESH && !triggered) {
                     current_micro(&m1);
+
                     // Draw the window at the top left corner
                     draw_gaze_cursor(WINDOW_SIZE / 2, WINDOW_SIZE / 2);
                     current_micro(&m2);
 
+                    // Log an estimate of the drawing delay
                     printf("Drawing delay: %6.3f ms\n",
                            m2.msec + m2.usec / 1000.0 - m1.msec +
                                m1.usec / 1000.0);
@@ -247,37 +206,48 @@ int gc_window_trial(SDL_Surface *fgbm,
                     x = x_new;
                     y = y_new;
                     triggered = 1;
+
+                    // Blocking read call while we wait for the arduino's
+                    // end-to-end measurement.
+                    rdlen = read(fd, buf, sizeof(buf) - 1);
+                    if (rdlen > 0) {
+                        buf[rdlen] = 0;
+                        printf("Read %d:", rdlen);
+                        for (p = buf; rdlen-- > 0; p++) {
+                            printf(" 0x%02x", *p);
+                            if (*p < ' ')
+                                *p = '\0';  // replace any control chars
+                        }
+                        printf("\n    \"%s\"\n\n", buf);
+                    } else if (rdlen < 0) {
+                        printf("Error from read: %d: %s\n",
+                               rdlen,
+                               strerror(errno));
+                        end_trial();
+                        return TRIAL_ERROR;
+                    } else {
+                        printf("Nothing read. EOF?\n");
+                    }
+
+                    end_trial();
+                    break;
                 }
 
-                if (first_display) /* mark display start AFTER first drawing of
-                                      window */
-                {
+                if (first_display) {
                     first_display = 0;
-                    drawing_time =
-                        current_msec() - drawing_time; /* delay from retrace */
-                    eyemsg_printf("%d DISPLAY ON",
-                                  drawing_time); /* message for RT recording in
-                                                    analysis */
-                    eyemsg_printf("SYNCTIME %d",
-                                  drawing_time); /* message marks zero-plot time
-                                                    for EDFVIEW */
-                    // SDL_Flip(window);
                     SDL_BlitSurface(bgbm, NULL, window, NULL);
                 }
 
             } else {
-                /* Don't move window during blink */
+                // Don't move window during blink
             }
         }
-    } /* END OF RECORDING LOOP */
+    }
 
-    end_realtime_mode(); /* safety cleanup code */
+    // dump any accumulated key presses
     while (getkey())
-        ; /* dump any accumulated key presses */
+        ;
 
-    /* report response result: 0=timeout, else button number */
-    eyemsg_printf("TRIAL_RESULT %d", button);
-
-    /* Call this at the end of the trial, to handle special conditions */
+    // Call this at the end of the trial, to handle special conditions
     return check_record_exit();
 }

@@ -22,6 +22,9 @@
 
 #define WINDOW_SIZE 50 /* Dimensions of the white square */
 #define DIFF_THRESH 25 /* Abs diff for x or y to change before trigger */
+#define SERIALTERMINAL "/dev/ttyACM0"
+#define BAUD B115200
+#define NUM_TRIALS 3
 
 extern DISPLAYINFO
     dispinfo;               /* display information: size, colors, refresh rate*/
@@ -40,7 +43,8 @@ int gc_window_trial(SDL_Surface *fgbm,
                     SDL_Surface *bgbm,
                     int wwidth,
                     int wheight,
-                    UINT32 time_limit);
+                    UINT32 time_limit,
+                    int fd);
 
 #define SETCOLOR(c, x, y, z)                                                   \
     c.r = x;                                                                   \
