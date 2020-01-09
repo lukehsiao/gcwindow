@@ -106,15 +106,11 @@ void free_cursor() {
 int draw_gaze_cursor(int x, int y) {
     SDL_Rect rct = {
         x - cursorrect.w / 2, y - cursorrect.h / 2, cursorrect.w, cursorrect.h};
-    if (!(last.x == UNDEFINED && last.x == last.y && last.w == last.h &&
-          last.x == last.w))  // erase cursor
-        SDL_BlitSurface(main_clone, &last, main_window, &last);
 
-    if (cursor)
-        SDL_BlitSurface(cursor, NULL, main_window, &rct);
-    else if (src)
-        SDL_BlitSurface(src, &rct, main_window, &rct);
-    SDL_UpdateRect(main_window, 0, 0, WINDOW_SIZE, WINDOW_SIZE);
+    // Copy forground into cursor location and update
+    SDL_BlitSurface(src, &rct, main_window, &rct);
+    SDL_UpdateRect(main_window, rct.x, rct.y, rct.w, rct.h);
+
     if (ISPAGEFLIP(main_window)) {
         last = current;
         current = rct;

@@ -194,8 +194,8 @@ int gc_window_trial(SDL_Surface *fgbm,
                     abs(y - y_new) >= DIFF_THRESH && !triggered) {
                     current_micro(&m1);
 
-                    // Draw the window at the top left corner
-                    draw_gaze_cursor(WINDOW_SIZE / 2, WINDOW_SIZE / 2);
+                    // Draw the window at the bottom left corner
+                    draw_gaze_cursor(WINDOW_SIZE / 2, 1080 - (WINDOW_SIZE / 2));
                     current_micro(&m2);
 
                     // Log an estimate of the drawing delay
