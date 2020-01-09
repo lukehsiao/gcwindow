@@ -59,7 +59,8 @@ int gc_window_trial(SDL_Surface *fgbm,
                     int wwidth,
                     int wheight,
                     UINT32 time_limit,
-                    int fd) {
+                    int tty,
+                    FILE *log) {
     UINT32 trial_start = 0;  // trial start time (for timeout)
     UINT32 drawing_time;     // retrace-to-draw delay
     int button;              // the button pressed (0 if timeout)
@@ -76,6 +77,7 @@ int gc_window_trial(SDL_Surface *fgbm,
     unsigned char buf[64];  // Store serial data from Arduino
     int rdlen, wlen;        // Number of bytes read and written
     unsigned char *p;       // pointer for manupulating recieved string
+    unsigned int delay;     // Track drawing delay time
 
     // Double check everything is connected
     if (!eyelink_is_connected())
@@ -131,13 +133,13 @@ int gc_window_trial(SDL_Surface *fgbm,
     }
 
     // Send Arduino the command to switch LEDs
-    wlen = write(fd, "g\n", 2);
+    wlen = write(tty, "g\n", 2);
     if (wlen != 2) {
         printf("Error from write: %d, %d\n", wlen, errno);
         end_trial();
         return TRIAL_ERROR;
     }
-    if (tcdrain(fd) != 0) {
+    if (tcdrain(tty) != 0) {
         printf("Error from tcdrain: %s\n", strerror(errno));
         end_trial();
         return TRIAL_ERROR;
@@ -199,9 +201,9 @@ int gc_window_trial(SDL_Surface *fgbm,
                     current_micro(&m2);
 
                     // Log an estimate of the drawing delay
-                    printf("Drawing delay: %6.3f ms\n",
-                           m2.msec + m2.usec / 1000.0 - m1.msec +
-                               m1.usec / 1000.0);
+                    delay = ((m2.msec * 1000) + m2.usec) -
+                            ((m1.msec * 1000) + m1.usec);
+                    printf("Drawing delay: %d us\n", delay);
 
                     x = x_new;
                     y = y_new;
@@ -209,7 +211,7 @@ int gc_window_trial(SDL_Surface *fgbm,
 
                     // Blocking read call while we wait for the arduino's
                     // end-to-end measurement.
-                    rdlen = read(fd, buf, sizeof(buf) - 1);
+                    rdlen = read(tty, buf, sizeof(buf) - 1);
                     if (rdlen > 0) {
                         buf[rdlen] = 0;
                         printf("Read %d:", rdlen);
@@ -228,6 +230,9 @@ int gc_window_trial(SDL_Surface *fgbm,
                     } else {
                         printf("Nothing read. EOF?\n");
                     }
+
+                    // Log results to file
+                    fprintf(log, "%s, %d\n", buf, delay);
 
                     end_trial();
                     break;

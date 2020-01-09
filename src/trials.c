@@ -147,7 +147,7 @@ static int create_image_bitmaps() {
  *
  * @return: trial result code
  */
-int do_gcwindow_trial(int fd) {
+int do_gcwindow_trial(int fd, FILE *log) {
     int i;
 
     set_offline_mode();  // Must be offline to draw to EyeLink screen
@@ -172,7 +172,7 @@ int do_gcwindow_trial(int fd) {
             ((eyelink_get_tracker_version(NULL) >= 2) ? 0 : BX_GRAYSCALE)));
 
     /* Small WINDOW_SIZExWINDOW_SIZE px window */
-    i = gc_window_trial(fgbm, bgbm, WINDOW_SIZE, WINDOW_SIZE, 60000L, fd);
+    i = gc_window_trial(fgbm, bgbm, WINDOW_SIZE, WINDOW_SIZE, 60000L, fd, log);
     SDL_FreeSurface(fgbm);
     fgbm = NULL;
     SDL_FreeSurface(bgbm);
@@ -189,7 +189,12 @@ int run_trials(void) {
     int i;
     int trial;
     int fd;  // File descriptor for the serial port
+    FILE *log;
     char *portname = SERIALTERMINAL;
+
+    // Open log file to store results
+    log = fopen("results.csv", "w");
+    fprintf(log, "e2e (us),drawing (us)\n");
 
     // Open the serial port to the Arduino
     fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
@@ -229,17 +234,19 @@ int run_trials(void) {
         // drop out if link closed
         if (eyelink_is_connected() == 0 || break_pressed()) {
             close(fd);
+            fclose(log);
             return ABORT_EXPT;
         }
 
         // RUN THE TRIAL
-        i = do_gcwindow_trial(fd);
+        i = do_gcwindow_trial(fd, log);
 
         // Report errors
         switch (i) {
             case ABORT_EXPT:  // handle experiment abort or disconnect
                 printf("EXPERIMENT ABORTED\n");
                 close(fd);
+                fclose(log);
                 return ABORT_EXPT;
             case REPEAT_TRIAL:  // trial restart requested
                 printf("TRIAL REPEATED\n");
@@ -257,8 +264,9 @@ int run_trials(void) {
         }
     }
 
-    // Close serial connection
+    // clean up
     close(fd);
+    fclose(log);
 
     return 0;
 }
