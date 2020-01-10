@@ -20,8 +20,8 @@
 
 #include <sdl_expt.h>
 
-#define WINDOW_SIZE 50 /* Dimensions of the white square */
-#define DIFF_THRESH 25 /* Abs diff for x or y to change before trigger */
+#define WINDOW_SIZE 100 /* Dimensions of the white square */
+#define DIFF_THRESH 25  /* Abs diff for x or y to change before trigger */
 #define SERIALTERMINAL "/dev/ttyACM0"
 #define BAUD B115200
 #define NUM_TRIALS 3
