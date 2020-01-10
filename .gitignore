@@ -2,6 +2,10 @@
 *.EDF
 *.asc
 
+### Python ###
+*.pdf
+.venv
+
 ### C ###
 # Prerequisites
 *.d
