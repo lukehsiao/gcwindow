@@ -232,7 +232,7 @@ int gc_window_trial(SDL_Surface *fgbm,
                     }
 
                     // Log results to file
-                    fprintf(log, "%s, %d\n", buf, delay);
+                    fprintf(log, "%s,%d\n", buf, delay);
 
                     end_trial();
                     break;
