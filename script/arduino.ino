@@ -1,5 +1,5 @@
 int sensorPin = A0;
-int ledPin = LED_BUILTIN;
+int ledPin = 10;
 
 void setup()
 {
@@ -38,10 +38,8 @@ void loop()
             digitalWrite(ledPin, LOW);
             sensorValue = analogRead(sensorPin);
 
-            //if (micros() - ts1 > 5000000) {
-
             // Rising edge trigger condition
-            if (sensorValue > 150) {
+            if (sensorValue > 512) {
                 // Log time difference and send back to host PC
                 ts2 = micros();
                 Serial.println(ts2 - ts1);
