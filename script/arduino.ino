@@ -14,7 +14,7 @@ void loop()
     static uint32_t ts2 = 0;
     static int state = 0;
     static int sensorValue = 0;
-    String cmd = "";
+    int cmd = 0;
 
     switch (state) {
         case 0:
@@ -22,10 +22,9 @@ void loop()
 
             // poll new command
             if (Serial.available() > 0) {
-                cmd = Serial.readString();
-                cmd.trim();
+                cmd = Serial.read();
 
-                if (cmd == "g") {
+                if (cmd == 'g') {
                     ts1 = micros();
 
                     // Move to next state
