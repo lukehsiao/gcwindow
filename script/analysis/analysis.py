@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-FIGSIZE = (6, 4)
+FIGSIZE = (7, 4)
 
 
 def _plot(infile):
@@ -36,10 +36,10 @@ def _plot(infile):
     data = pd.read_csv(infile, skipinitialspace=True)
 
     # Plot PDF
-    x = np.random.randn(100)
     plot = sns.distplot(
         data["e2e (us)"] / 1000.0,
         kde=False,
+        bins=25,
         ax=ax
     )
 
@@ -53,6 +53,30 @@ def _plot(infile):
     plot.set(xlabel="End-to-end Latency (ms)")
     plot.set(ylabel="Histogram")
     outfile = "histogram.pdf"
+    pp = PdfPages(outfile)
+    pp.savefig(plot.get_figure().tight_layout())
+    pp.close()
+    run(["pdfcrop", outfile, outfile], stdout=DEVNULL, check=True)
+    logger.info(f"Plot saved to {outfile}")
+
+    # Plot Boxplot
+    fig, ax = plt.subplots(figsize=FIGSIZE)
+    plot = sns.boxplot(
+        data = data,
+        orient = "h",
+        ax=ax
+    )
+
+    # Remove the seaborn legend title
+    #  handles, labels = ax.get_legend_handles_labels()
+    #  ax.legend(handles=handles[1:], labels=labels[1:])
+    #  ax.set_ylim([0, 1])
+    #  ax.set_xlim([0, 100])
+
+    sns.despine(bottom=True, top=True)
+    plot.set(ylabel="Delay Type")
+    plot.set(xlabel="Time (us)")
+    outfile = "boxplot.pdf"
     pp = PdfPages(outfile)
     pp.savefig(plot.get_figure().tight_layout())
     pp.close()
